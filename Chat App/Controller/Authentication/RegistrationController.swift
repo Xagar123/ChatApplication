@@ -13,7 +13,7 @@ class RegistrationController: UIViewController {
     
     
     //MARK: -Properties
-    private var viewModel = LoginViewModel()
+    private var viewModel = RegistrationViewModel()
     private var profileImage: UIImage?
     
     private let plusPhotoButton: UIButton = {
@@ -138,6 +138,11 @@ class RegistrationController: UIViewController {
     
     @objc func handleSelectPhoto() {
         print("Selected photo inside")
+        let picker = UIImagePickerController()
+        picker.allowsEditing = true
+        picker.delegate = self
+                
+        present(picker, animated: true)
     }
     
     @objc func handleShowLogin() {
@@ -151,74 +156,48 @@ class RegistrationController: UIViewController {
         guard let userName = userNameTextField.text?.lowercased() else {return}
         guard let profileImage = profileImage else {return}
         
+        
+        
         guard let imageData = profileImage.jpegData(compressionQuality: 0.3) else {return}
         
         let filename = NSUUID().uuidString
         let ref = Storage.storage().reference(withPath: "/profile_image/\(filename)")
         
-        ref.putData(imageData, metadata: nil) { metadata, error in
+        ref.putData(imageData, metadata: nil) { metaData, error in
             if let error = error {
-                print(error.localizedDescription)
+                print("DEBUG: fail to upload image \(error.localizedDescription)")
                 return
             }
-            ref.downloadUrl { (url, error) in
-                guard let profileImageUrl = url.absoluteURL else {return}
-
-                Auth.auth().currentUser(withEmail: email, password: password) { (result, error) in
+            
+            ref.downloadURL( completion: { (url, error) in
+                
+                guard let imageUrl = url?.absoluteString else { return }
+                
+                Auth.auth().createUser(withEmail: email, password: password) { (result, error) in
                     if let error = error {
                         print(error.localizedDescription)
                         return
                     }
                     guard let uid = result?.user.uid else {return}
-
+                    
                     let data = ["email": email,
                                 "fullname": fullName,
-                                "profileImage": profileImageUrl,
+                                "profileImage": imageUrl,
                                 "uid": uid,
                                 "username": userName] as [String: Any]
+                    
                     Firestore.firestore().collection("USER").document(uid).setData(data) { error in
                         if let error = error {
                             print(error.localizedDescription)
                             return
                         }
                         print("user created")
+                        self.dismiss(animated: true, completion: nil)
                     }
-               }
-
-       }
-        
-//        ref.putData(imageData) { metaData, error in
-//            if let error = error {
-//                print(error.localizedDescription)
-//                return
-//            }
-//            ref.downloadUrl { (url, error) in
-//                guard let profileImageUrl = url.absoluteURL else {return}
-//
-//                Auth.auth().currentUser(withEmail: email, password: password) { (result, error) in
-//                    if let error = error {
-//                        print(error.localizedDescription)
-//                        return
-//                    }
-//                    guard let uid = result?.user.uid else {return}
-//
-//                    let data = ["email": email,
-//                                "fullname": fullName,
-//                                "profileImage": profileImageUrl,
-//                                "uid": uid,
-//                                "username": userName] as [String: Any]
-//                    Firestore.firestore().collection("USER").document(uid).setData(data) { error in
-//                        if let error = error {
-//                            print(error.localizedDescription)
-//                            return
-//                        }
-//                        print("user created")
-//                    }
-//                }
-//            }
-
+                }
+            })
+            
         }
-        
     }
     
     @objc func textDidChnage(sender: UITextField) {
@@ -239,18 +218,25 @@ class RegistrationController: UIViewController {
 //MARK: - UIImagePickerControllerDelegate
 
 extension RegistrationController: UIImagePickerControllerDelegate, UINavigationControllerDelegate {
+
     func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
-        let image = info[.originalImage] as? UIImage
-        profileImage = image
-        plusPhotoButton.setImage(image?.withRenderingMode(.alwaysOriginal), for: .normal)
-        plusPhotoButton.layer.borderColor = UIColor.white.cgColor
-        plusPhotoButton.layer.borderWidth = 3.0
-        plusPhotoButton.layer.cornerRadius = 200/2
         
-        dismiss(animated: true, completion: nil)
+        print("image picker delegate")
+        guard let selectedImage = info[.editedImage] as? UIImage else {return}
+        profileImage = selectedImage
+        
+        plusPhotoButton.layer.cornerRadius = plusPhotoButton.frame.width / 2
+        plusPhotoButton.layer.masksToBounds = true
+        plusPhotoButton.layer.borderColor = UIColor.white.cgColor
+        plusPhotoButton.layer.borderWidth = 2
+        plusPhotoButton.setImage(selectedImage.withRenderingMode(.alwaysOriginal), for: .normal)
+        self.dismiss(animated: true, completion: nil)
+        print("inside imagepicker")
     }
+    
+    
 }
 
 //MARK: - AuthenticationControllerProtocol
 
-//extension RegistrationController: Authenticati
+//extension RegistrationController: Authen

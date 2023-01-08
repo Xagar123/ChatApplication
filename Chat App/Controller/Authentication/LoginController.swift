@@ -6,6 +6,8 @@
 //
 
 import UIKit
+import Firebase
+
 
 class LoginController: UIViewController {
     
@@ -122,8 +124,17 @@ class LoginController: UIViewController {
     }
     
     @objc func handleLoginButton() {
-        let container = ConversionController()
-        navigationController?.pushViewController(container, animated: true)
+        guard let email = emailTextField.text else {return}
+        guard let password = passwordTextField.text else {return}
+        Auth.auth().signIn(withEmail: email, password: password) { result, error in
+            if let error = error {
+                print("DEBUG: fail to logedin \(error.localizedDescription)")
+                return
+            }else{
+                print("DEBUG:===== USER LOGIN SUCCESSFUL")
+                self.dismiss(animated: true, completion: nil)
+            }
+        }
     }
     
     @objc func textDidChnage(sender: UITextField) {

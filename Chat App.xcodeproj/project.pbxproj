@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		3FBBAB96B32F324086E62320 /* Pods_Chat_App.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 051BFA342CF8C6CC1B06FDFD /* Pods_Chat_App.framework */; };
+		841DDBEF296A772400E00FC3 /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 841DDBEE296A772400E00FC3 /* AuthService.swift */; };
 		8480720F296223E8002A3BC9 /* RegistrationViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8480720E296223E8002A3BC9 /* RegistrationViewModel.swift */; };
 		84A92B5F29614A3000B8C4E9 /* LoginController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84A92B5E29614A3000B8C4E9 /* LoginController.swift */; };
 		84A92B6129614A4C00B8C4E9 /* RegistrationController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84A92B6029614A4C00B8C4E9 /* RegistrationController.swift */; };
@@ -27,6 +28,7 @@
 
 /* Begin PBXFileReference section */
 		051BFA342CF8C6CC1B06FDFD /* Pods_Chat_App.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Chat_App.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		841DDBEE296A772400E00FC3 /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
 		8480720E296223E8002A3BC9 /* RegistrationViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegistrationViewModel.swift; sourceTree = "<group>"; };
 		84A92B5E29614A3000B8C4E9 /* LoginController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginController.swift; sourceTree = "<group>"; };
 		84A92B6029614A4C00B8C4E9 /* RegistrationController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegistrationController.swift; sourceTree = "<group>"; };
@@ -162,6 +164,7 @@
 		84FF0BA329608EB600DC12A5 /* API */ = {
 			isa = PBXGroup;
 			children = (
+				841DDBEE296A772400E00FC3 /* AuthService.swift */,
 			);
 			path = API;
 			sourceTree = "<group>";
@@ -293,6 +296,7 @@
 				84FF0B8E29608CB300DC12A5 /* ViewController.swift in Sources */,
 				8480720F296223E8002A3BC9 /* RegistrationViewModel.swift in Sources */,
 				84C56A9729616F2D00BEF37C /* InputContainerView.swift in Sources */,
+				841DDBEF296A772400E00FC3 /* AuthService.swift in Sources */,
 				84FF0B8A29608CB300DC12A5 /* AppDelegate.swift in Sources */,
 				84A92B6329615AB900B8C4E9 /* Extension.swift in Sources */,
 				84C56A992961771700BEF37C /* CustomeTextField.swift in Sources */,

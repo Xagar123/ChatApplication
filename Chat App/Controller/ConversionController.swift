@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import Firebase
 
 private let reuseIdentifier = "ConversionCell"
 
@@ -23,10 +24,41 @@ class ConversionController: UIViewController {
         super.viewDidLoad()
         
         configureUI()
+        authenticateUser()
     }
     
+    
+    
+    
+    //MARK: - API
+    func authenticateUser() {
+        if Auth.auth().currentUser?.uid == nil {
+            print("DEBUG User is not loged in present login screen")
+            presentLoginScreen()
+        }else {
+            print("DEBUG: User is logged in. configure controller \(Auth.auth().currentUser?.uid)")
+            
+        }
+    }
    
+    func logout() {
+        do {
+            try Auth.auth().signOut()
+            presentLoginScreen()
+        } catch {
+            print("DEBUG : Error signout")
+        }
+    }
     //MARK: - Helper
+    
+    func presentLoginScreen() {
+        DispatchQueue.main.async {
+            let controller = LoginController()
+            let nav = UINavigationController(rootViewController: controller)
+            nav.modalPresentationStyle = .fullScreen
+            self.present(nav, animated: true)
+        }
+    }
     
     func configureUI() {
         
@@ -74,8 +106,10 @@ class ConversionController: UIViewController {
     //MARK: - Selector
     
     @objc func showProfile() {
-        print("123")
+        logout()
     }
+    
+    
     
 }
 
