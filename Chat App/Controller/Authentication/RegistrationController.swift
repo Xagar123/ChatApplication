@@ -111,6 +111,7 @@ class RegistrationController: UIViewController {
     
     func configureUI() {
         configureGradientLayer()
+        configureNotificationObservers()
         
         view.addSubview(plusPhotoButton)
         plusPhotoButton.centerX(inView: view)
@@ -127,10 +128,16 @@ class RegistrationController: UIViewController {
         view.addSubview(alreadyHaveAccountButton)
         alreadyHaveAccountButton.anchor(left: view.leftAnchor, bottom: view.safeAreaLayoutGuide.bottomAnchor, right: view.rightAnchor, paddingLeft: 32, paddingBottom: 16, paddingRight: 16)
         
+        
+    }
+    
+    func configureNotificationObservers() {
         emailTextField.addTarget(self, action: #selector(textDidChnage), for: .editingChanged)
         passwordTextField.addTarget(self, action: #selector(textDidChnage), for: .editingChanged)
         fullNameTextField.addTarget(self, action: #selector(textDidChnage), for: .editingChanged)
         userNameTextField.addTarget(self, action: #selector(textDidChnage), for: .editingChanged)
+        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow), name: UIResponder.keyboardWillShowNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide), name: UIResponder.keyboardWillHideNotification, object: nil)
     }
     
     
@@ -156,48 +163,20 @@ class RegistrationController: UIViewController {
         guard let userName = userNameTextField.text?.lowercased() else {return}
         guard let profileImage = profileImage else {return}
         
+        let credential = RegistrationCredential(email: email, password: password, fullName: fullName, userName: userName, profileImage: profileImage)
         
+        showLoader(true, withText: "Singing you up")
         
-        guard let imageData = profileImage.jpegData(compressionQuality: 0.3) else {return}
-        
-        let filename = NSUUID().uuidString
-        let ref = Storage.storage().reference(withPath: "/profile_image/\(filename)")
-        
-        ref.putData(imageData, metadata: nil) { metaData, error in
+        AuthService.shared.createUser(credential: credential) { error in
             if let error = error {
-                print("DEBUG: fail to upload image \(error.localizedDescription)")
+                print("DEBUG fail to login with USER \(error.localizedDescription)")
+                self.showLoader(false)
                 return
             }
-            
-            ref.downloadURL( completion: { (url, error) in
-                
-                guard let imageUrl = url?.absoluteString else { return }
-                
-                Auth.auth().createUser(withEmail: email, password: password) { (result, error) in
-                    if let error = error {
-                        print(error.localizedDescription)
-                        return
-                    }
-                    guard let uid = result?.user.uid else {return}
-                    
-                    let data = ["email": email,
-                                "fullname": fullName,
-                                "profileImage": imageUrl,
-                                "uid": uid,
-                                "username": userName] as [String: Any]
-                    
-                    Firestore.firestore().collection("USER").document(uid).setData(data) { error in
-                        if let error = error {
-                            print(error.localizedDescription)
-                            return
-                        }
-                        print("user created")
-                        self.dismiss(animated: true, completion: nil)
-                    }
-                }
-            })
-            
+            self.showLoader(false)
+            self.dismiss(animated: true, completion: nil)
         }
+        
     }
     
     @objc func textDidChnage(sender: UITextField) {
@@ -212,6 +191,17 @@ class RegistrationController: UIViewController {
             viewModel.userName = sender.text
         }
         checkFormStatus()
+    }
+    
+    @objc func keyboardWillShow() {
+        if view.frame.origin.y == 0 {
+            self.view.frame.origin.y -= 88
+        }
+    }
+    @objc func keyboardWillHide() {
+        if view.frame.origin.y != 0 {
+            view.frame.origin.y = 0
+        }
     }
 }
 
