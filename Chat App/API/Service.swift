@@ -13,16 +13,13 @@ struct Service {
         
         var users = [User]()
         COLLECTION_USER.getDocuments { snapShot, error in
-            snapShot?.documents.forEach({ document in
-                let dictionary = document.data()
-                
-                let user = User(dictionary: dictionary)
-                
-                users.append(user)
-                completion(users)
-                print("DEBUG User name: \(user.userName)")
-                print("DEBUG Full name: \(user.fullName)")
-            })
+            
+            guard var users = snapShot?.documents.map({ User(dictionary: $0.data()) }) else {return}
+            
+            if let i = users.firstIndex(where: { $0.uid == Auth.auth().currentUser?.uid }) {
+                users.remove(at: i)
+            }
+            completion(users)
         }
     }
     
@@ -81,7 +78,7 @@ struct Service {
                 let dictionary = change.document.data()
                 let message = Message(dictionary: dictionary)
                 
-                self.featchUser(withUid: message.toId) { user in
+                self.featchUser(withUid: message.chatPartnerId) { user in
                     let conversation = Conversation(user: user, message: message)
                     conversion.append(conversation)
                     competion(conversion)

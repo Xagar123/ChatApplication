@@ -13,6 +13,7 @@ class RegistrationController: UIViewController {
     
     
     //MARK: -Properties
+    weak var delegate: AuthenticationDelegate?
     private var viewModel = RegistrationViewModel()
     private var profileImage: UIImage?
     
@@ -169,12 +170,12 @@ class RegistrationController: UIViewController {
         
         AuthService.shared.createUser(credential: credential) { error in
             if let error = error {
-                print("DEBUG fail to login with USER \(error.localizedDescription)")
                 self.showLoader(false)
+                self.showError(error.localizedDescription)
                 return
             }
             self.showLoader(false)
-            self.dismiss(animated: true, completion: nil)
+            self.delegate?.authenticationComplete()
         }
         
     }

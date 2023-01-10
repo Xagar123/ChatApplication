@@ -9,11 +9,16 @@ import UIKit
 import Firebase
 import JGProgressHUD
 
+protocol AuthenticationDelegate: class {
+    func authenticationComplete()
+}
 
 class LoginController: UIViewController {
     
     
     //MARK: -Properties
+    
+    weak var delegate: AuthenticationDelegate?
     
     private var viewModel = LoginViewModel()
     
@@ -121,6 +126,7 @@ class LoginController: UIViewController {
     
     @objc func handleShowSignUp() {
         let container = RegistrationController()
+        container.delegate = delegate
         navigationController?.pushViewController(container, animated: true)
     }
     
@@ -129,14 +135,16 @@ class LoginController: UIViewController {
         guard let password = passwordTextField.text else {return}
         
         showLoader(true, withText: "Login in")
+        
         AuthService.shared.logUserIn(withEmail: email, password: password) { result, error in
             if let error = error {
-                print("DEBUG Fail to login \(error.localizedDescription)")
                 self.showLoader(false)
+                self.showError(error.localizedDescription)
+                
                 return
             }
             self.showLoader(false)
-            self.dismiss(animated: true, completion: nil)
+            self.delegate?.authenticationComplete()
         }
         
     }

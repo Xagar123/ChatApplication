@@ -18,6 +18,7 @@ class ConversionController: UIViewController {
     private let tableView = UITableView()
     
     private var conversation = [Conversation]()
+    private var conversationDictionary = [String: Conversation]()
     
     private let newMessageButton: UIButton = {
         let button = UIButton(type: .system)
@@ -48,8 +49,15 @@ class ConversionController: UIViewController {
     //MARK: - API
     
     func fetchConversation() {
+        showLoader(true,withText: "Loading")
         Service.fetchConversation { conversation in
-            self.conversation = conversation
+            
+            conversation.forEach { conversation in
+                let message = conversation.message
+                self.conversationDictionary[message.chatPartnerId] = conversation
+            }
+            self.showLoader(false)
+            self.conversation = Array(self.conversationDictionary.values)
             self.tableView.reloadData()
         }
     }
@@ -77,6 +85,7 @@ class ConversionController: UIViewController {
     func presentLoginScreen() {
         DispatchQueue.main.async {
             let controller = LoginController()
+            controller.delegate = self
             let nav = UINavigationController(rootViewController: controller)
             nav.modalPresentationStyle = .fullScreen
             self.present(nav, animated: true)
@@ -84,10 +93,9 @@ class ConversionController: UIViewController {
     }
     
     func configureUI() {
-        
-       
+
         configureTableView()
-        showLoader(true,withText: "Loading")
+        
         let image = UIImage(systemName: "person.circle.fill")
         navigationItem.leftBarButtonItem = UIBarButtonItem(image: image, style: .plain, target: self, action: #selector(showProfile))
         
@@ -95,7 +103,7 @@ class ConversionController: UIViewController {
         newMessageButton.setDimensions(height: 56, width: 56)
         newMessageButton.layer.cornerRadius = 56 / 2
         newMessageButton.anchor(bottom: view.safeAreaLayoutGuide.bottomAnchor, right: view.rightAnchor, paddingBottom: 16, paddingRight: 24)
-        showLoader(false)
+        
     }
     
     
@@ -175,11 +183,22 @@ extension ConversionController: NewMessageControllerDelegate {
 
 }
 
-
+//MARK: -ProfileControllerDelegate
 extension ConversionController: ProfileControllerDelegate {
     
     func handleLogout() {
         logout()
+    }
+}
+
+//MARK: - AuthenticationDelegate
+
+extension ConversionController: AuthenticationDelegate {
+    
+    func authenticationComplete() {
+        self.dismiss(animated: true)
+        configureUI()
+        fetchConversation()
     }
     
     

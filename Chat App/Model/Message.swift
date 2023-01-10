@@ -13,7 +13,17 @@ struct Message {
     let fromId: String
     var timeStamp: Timestamp!
     var user:User?
+    
     let isFromCurrentUser: Bool
+    
+    var chatPartnerId: String {
+//        if Auth.auth().currentUser?.uid == fromId {
+//            return toId
+//        }else {
+//            return fromId
+//        }
+        return isFromCurrentUser ? toId : fromId
+    }
     
     init(dictionary: [String:Any]) {
         self.text = dictionary["text"] as? String ?? ""

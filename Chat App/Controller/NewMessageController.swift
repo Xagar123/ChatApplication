@@ -41,7 +41,9 @@ class NewMessageController: UITableViewController {
     //MARK: -API
     
     func fetchUser() {
+        showLoader(true)
         Service.fetchUsers { user in
+            self.showLoader(false)
             self.users = user
             self.tableView.reloadData()
             print("DEBUG user in new message \(user)")
