@@ -17,6 +17,8 @@ class ConversionController: UIViewController {
     
     private let tableView = UITableView()
     
+    private var conversation = [Conversation]()
+    
     private let newMessageButton: UIButton = {
         let button = UIButton(type: .system)
         button.setImage(UIImage(systemName: "plus"), for:.normal)
@@ -34,12 +36,24 @@ class ConversionController: UIViewController {
         
         configureUI()
         authenticateUser()
+        fetchConversation()
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        configureNavigationBar(withTitle: "Messages", preferLargeTitle: true)
     }
     
     
-    
-    
     //MARK: - API
+    
+    func fetchConversation() {
+        Service.fetchConversation { conversation in
+            self.conversation = conversation
+            self.tableView.reloadData()
+        }
+    }
+    
     func authenticateUser() {
         if Auth.auth().currentUser?.uid == nil {
             print("DEBUG User is not loged in present login screen")
@@ -71,9 +85,9 @@ class ConversionController: UIViewController {
     
     func configureUI() {
         
-        configureNavigationBar(withTitle: "Messages", preferLargeTitle: true)
+       
         configureTableView()
-        
+        showLoader(true,withText: "Loading")
         let image = UIImage(systemName: "person.circle.fill")
         navigationItem.leftBarButtonItem = UIBarButtonItem(image: image, style: .plain, target: self, action: #selector(showProfile))
         
@@ -81,13 +95,14 @@ class ConversionController: UIViewController {
         newMessageButton.setDimensions(height: 56, width: 56)
         newMessageButton.layer.cornerRadius = 56 / 2
         newMessageButton.anchor(bottom: view.safeAreaLayoutGuide.bottomAnchor, right: view.rightAnchor, paddingBottom: 16, paddingRight: 24)
+        showLoader(false)
     }
     
     
     func configureTableView() {
         tableView.backgroundColor = .white
         tableView.rowHeight = 80
-        tableView.register(UITableViewCell.self, forCellReuseIdentifier: reuseIdentifier)
+        tableView.register(ConversationCell.self, forCellReuseIdentifier: reuseIdentifier)
         tableView.tableFooterView = UIView() //it will return no. of cell which register
         tableView.delegate = self
         tableView.dataSource = self
@@ -97,12 +112,20 @@ class ConversionController: UIViewController {
         tableView.frame = view.frame
     }
     
+    func showChatController(forUser user: User) {
+        let controller = ChatController(user: user)
+        navigationController?.pushViewController(controller, animated: true)
+    }
     
     
     //MARK: - Selector
     
     @objc func showProfile() {
-        logout()
+        let controller = ProfileController(style: .insetGrouped)
+        controller.delegate = self
+        let nav = UINavigationController(rootViewController: controller)
+        nav.modalPresentationStyle = .fullScreen
+        present(nav, animated: true)
     }
     
     @objc func showNewMessage() {
@@ -118,7 +141,8 @@ class ConversionController: UIViewController {
 extension ConversionController: UITableViewDelegate {
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        print(indexPath.row)
+        let user = conversation[indexPath.row].user
+        showChatController(forUser: user)
     }
     
 }
@@ -126,13 +150,16 @@ extension ConversionController: UITableViewDelegate {
 extension ConversionController: UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return 2
+        return conversation.count
     }
     
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: reuseIdentifier , for: indexPath)
-        cell.textLabel?.text = "Test cell"
+        let cell = tableView.dequeueReusableCell(withIdentifier: reuseIdentifier , for: indexPath) as! ConversationCell
+       // cell.textLabel?.text = conversation[indexPath.row].message.text
+        print("Before assining")
+        cell.conversation = conversation[indexPath.row]
+        print("after assonong")
         return cell
     }
 }
@@ -142,9 +169,17 @@ extension ConversionController: UITableViewDataSource {
 extension ConversionController: NewMessageControllerDelegate {
     
     func controller(_ controller: NewMessageController, wantToStartChatWith user: User) {
-        controller.dismiss(animated: true,completion: nil)
-        let chat = ChatController(user: user)
-        navigationController?.pushViewController(chat, animated: true)
+        dismiss(animated: true,completion: nil)
+        showChatController(forUser: user)
+    }
+
+}
+
+
+extension ConversionController: ProfileControllerDelegate {
+    
+    func handleLogout() {
+        logout()
     }
     
     

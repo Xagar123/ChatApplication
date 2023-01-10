@@ -12,7 +12,7 @@ struct Service {
     static func fetchUsers(completion: @escaping([User])-> Void) {
         
         var users = [User]()
-        Firestore.firestore().collection("USER").getDocuments { snapShot, error in
+        COLLECTION_USER.getDocuments { snapShot, error in
             snapShot?.documents.forEach({ document in
                 let dictionary = document.data()
                 
@@ -26,6 +26,15 @@ struct Service {
         }
     }
     
+    static func featchUser(withUid uid: String, completion: @escaping(User) -> Void) {
+        COLLECTION_USER.document(uid).getDocument { snapShot, error in
+            guard let dictionary = snapShot?.data() else { return}
+            let user = User(dictionary: dictionary)
+            completion(user)
+                    
+        }
+    }
+    
    static func uploadMessage(_ message: String, to User: User, completion:((Error?)-> Void)?) {
         guard let currentUid = Auth.auth().currentUser?.uid else { return}
         
@@ -36,6 +45,10 @@ struct Service {
         
         COLLECTION_MESSAGES.document(currentUid).collection(User.uid).addDocument(data: data) { _ in
             COLLECTION_MESSAGES.document(User.uid).collection(currentUid).addDocument(data: data, completion: completion)
+            
+            COLLECTION_MESSAGES.document(currentUid).collection("recent-message").document(User.uid).setData(data)
+            
+            COLLECTION_MESSAGES.document(User.uid).collection("recent-message").document(currentUid).setData(data)
         }
     }
     
@@ -52,6 +65,28 @@ struct Service {
                     messages.append(Message(dictionary: dictionary))
                     completion(messages)
                 }
+            })
+        }
+    }
+    
+    static func fetchConversation(competion: @escaping([Conversation])-> Void) {
+    
+        var conversion = [Conversation]()
+        guard let uid = Auth.auth().currentUser?.uid else { return}
+        
+        let query = COLLECTION_MESSAGES.document(uid).collection("recent-message").order(by: "timeStamp")
+        
+        query.addSnapshotListener { snapShot, error in
+            snapShot?.documentChanges.forEach({ change in
+                let dictionary = change.document.data()
+                let message = Message(dictionary: dictionary)
+                
+                self.featchUser(withUid: message.toId) { user in
+                    let conversation = Conversation(user: user, message: message)
+                    conversion.append(conversation)
+                    competion(conversion)
+                }
+               
             })
         }
     }
